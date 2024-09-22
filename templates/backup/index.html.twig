@@ -11,10 +11,10 @@
 <div class="example-wrapper">
     <h1>Hello {{ controller_name }}! ✅</h1>
 
-    This friendly message is coming from:
     <ul>
-        <li>Your controller at <code>/home/jatin/code/internshala/user_management/src/Controller/BackupController.php</code></li>
-        <li>Your template at <code>/home/jatin/code/internshala/user_management/templates/backup/index.html.twig</code></li>
+        <li>Database Name: {{ database_name }} </li>
+        <li>Database User: {{ database_user }} </li>
+        <li>Database Password: {{ database_password }} </li>
     </ul>
 </div>
 {% endblock %}
