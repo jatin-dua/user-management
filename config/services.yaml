@@ -7,6 +7,7 @@ parameters:
     database_name: '%env(DATABASE_NAME)%'
     database_user: '%env(DATABASE_USER)%'
     database_password: '%env(DATABASE_PASSWORD)%'
+    upload_directory: '%kernel.project_dir%/public/uploads'
 
 services:
     # default configuration for services in *this* file
