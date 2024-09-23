@@ -86,6 +86,8 @@ class FileUploadController extends AbstractController
         // close the file
         fclose($handle);
 
+        $this->sendEmailNotifications($emails);
+        
         return new JsonResponse([
             'message' => 'File uploaded successfully',
             'filename' => $filename,
