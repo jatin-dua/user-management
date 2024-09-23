@@ -78,10 +78,10 @@ class FileUploadController extends AbstractController
             $user->setPassword('password');
 
             // Persist the user entity
-            $this->entityManager->persist($user);
+            // $this->entityManager->persist($user);
         }
         // Flush to save all the users
-        $this->entityManager->flush();
+        // $this->entityManager->flush();
         
         // close the file
         fclose($handle);
