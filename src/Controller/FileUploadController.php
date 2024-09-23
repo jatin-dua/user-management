@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
+
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,6 +14,12 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class FileUploadController extends AbstractController
 {
+    private $entityManager;
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
+
     #[Route('/api/upload', name: 'app_file_upload', methods: ['POST'])]
     public function upload(Request $request): Response
     {
@@ -57,6 +66,7 @@ class FileUploadController extends AbstractController
             $data[] = $row;
             [$name, $email, $username, $address, $role] = $row;
 
+            $role = $role === "USER" ? "ROLE_USER" : "ROLE_ADMIN";
             // Do something with the data, for example, printing it
             echo "Name: $name\n";
             echo "Email: $email\n";
@@ -66,8 +76,25 @@ class FileUploadController extends AbstractController
             echo "-------------------\n";
 
             $emails[] = $email;
+
+            
+            $user = new User();
+            $user->setName($name);
+            $user->setEmail($email);
+            $user->setUsername($username);
+            $user->setAddress($address);
+            $user->setRoles([$role]);
+            $user->setPassword('password');
+
+            // Collect email addresses
+            $emails[] = $email;
+            // Persist the user entity
+            $this->entityManager->persist($user);
         }
-        
+        // Flush to save all the users
+        $this->entityManager->flush();
+            
+
         // close the file
         fclose($handle);
 
