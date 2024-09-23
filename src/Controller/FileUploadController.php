@@ -43,6 +43,34 @@ class FileUploadController extends AbstractController
         // Move the uploaded file
         $uploadedFile->move($uploadDirectory, $filename);
     
+
+        $filepath = "$uploadDirectory/$filename";
+        $handle = fopen($filepath, 'r');
+        if ($handle === false) {
+            die('Cannot open the file ' . $filename);
+        }
+
+        $emails = [];
+        $headers = fgetcsv($handle);
+        // read each line in CSV file at a time
+        while (($row = fgetcsv($handle)) !== false) {
+            $data[] = $row;
+            [$name, $email, $username, $address, $role] = $row;
+
+            // Do something with the data, for example, printing it
+            echo "Name: $name\n";
+            echo "Email: $email\n";
+            echo "Username: $username\n";
+            echo "Address: $address\n";
+            echo "Role: $role\n";
+            echo "-------------------\n";
+
+            $emails[] = $email;
+        }
+        
+        // close the file
+        fclose($handle);
+
         return new JsonResponse([
             'message' => 'File uploaded successfully',
             'filename' => $filename,
