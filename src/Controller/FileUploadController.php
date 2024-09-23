@@ -103,12 +103,12 @@ class FileUploadController extends AbstractController
     private function sendEmailNotifications(array $emails)
     {
         // Get the DSN from environment variables
-        $dsn = $_ENV['MAILER_DSN'];
+        $dsn = $_ENV['MAILER_DSN_URL'];
         // Create the transport
         $transport = Transport::fromDsn($dsn);
         // Create the Mailer
         $mailer = new Mailer($transport);
-        $username = $_ENV['MAILER_USERNAME'];
+        $username = $_ENV['MAILER_USER_EMAIL'];
 
         foreach ($emails as $emailAddress) {
             // Create the email
