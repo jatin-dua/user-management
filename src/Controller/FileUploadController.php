@@ -24,30 +24,22 @@ class FileUploadController extends AbstractController
     public function upload(Request $request): Response
     {
         $uploadedFile = $request->files->get('file');
-        // $fileType = $request->request->get('file_type');
+        $fileType = $request->request->get('file_type');
 
         if (!$uploadedFile) {
             throw new BadRequestHttpException('No file provided');
         }
 
-        // // Validate the file type (you can also define a list of allowed types)
-        // $allowedTypes = ['text/csv', 'text/plain', 'application/sql']; // Add your allowed types here
-        // if (!in_array($fileType, $allowedTypes)) {
-        //     throw new BadRequestHttpException('Invalid file type');
-        // }
-
-        // // Use the provided file type to set the extension or for any other processing
-        // $extension = match ($fileType) {
-        //     'text/plain' => 'txt',
-        //     'text/csv' => 'csv',
-        //     'application/sql' => 'sql',
-        //     default => 'bin',
-        // };
+        // Validate the file type (you can also define a list of allowed types)
+        $allowedTypes = ['text/csv']; // Add your allowed types here
+        if (!in_array($fileType, $allowedTypes)) {
+            throw new BadRequestHttpException('Invalid file type');
+        }
 
         // Define the directory where you want to store the uploaded file
         $uploadDirectory = $this->getParameter('upload_directory');
 
-        $filename = pathinfo($uploadedFile->getClientOriginalName(), flags: PATHINFO_FILENAME).'.'.$uploadedFile->getClientOriginalExtension();
+        $filename = pathinfo($uploadedFile->getClientOriginalName(), flags: PATHINFO_FILENAME).'.csv';
 
         // Move the uploaded file
         $uploadedFile->move($uploadDirectory, $filename);
@@ -63,21 +55,11 @@ class FileUploadController extends AbstractController
         $headers = fgetcsv($handle);
         // read each line in CSV file at a time
         while (($row = fgetcsv($handle)) !== false) {
-            $data[] = $row;
             [$name, $email, $username, $address, $role] = $row;
-
             $role = $role === "USER" ? "ROLE_USER" : "ROLE_ADMIN";
-            // Do something with the data, for example, printing it
-            echo "Name: $name\n";
-            echo "Email: $email\n";
-            echo "Username: $username\n";
-            echo "Address: $address\n";
-            echo "Role: $role\n";
-            echo "-------------------\n";
 
             $emails[] = $email;
 
-            
             $user = new User();
             $user->setName($name);
             $user->setEmail($email);
@@ -86,22 +68,23 @@ class FileUploadController extends AbstractController
             $user->setRoles([$role]);
             $user->setPassword('password');
 
-            // Collect email addresses
-            $emails[] = $email;
             // Persist the user entity
             $this->entityManager->persist($user);
         }
         // Flush to save all the users
         $this->entityManager->flush();
-            
-
+        
         // close the file
         fclose($handle);
+
+        // TODO: Send Email Notifications
+        // TODO: Validate User
+        // TODO: Check if User already exists in DB
 
         return new JsonResponse([
             'message' => 'File uploaded successfully',
             'filename' => $filename,
-            // 'file_type' => $fileType
+            'file_type' => $fileType
         ]);
     }
 }
