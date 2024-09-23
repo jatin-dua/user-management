@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Mailer\Transport;
@@ -15,12 +16,16 @@ use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\Messenger\SendEmailMessage;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\env;
 
 class FileUploadController extends AbstractController
 {
+    private $messageBus;
     private $entityManager;
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $messageBus)
     {
+        $this->messageBus = $messageBus;
         $this->entityManager = $entityManager;
     }
 
@@ -111,7 +116,6 @@ class FileUploadController extends AbstractController
         $username = $_ENV['MAILER_USER_EMAIL'];
 
         foreach ($emails as $emailAddress) {
-            // Create the email
             $email = (new Email())
                 ->from($username)
                 ->to($emailAddress)
@@ -120,7 +124,7 @@ class FileUploadController extends AbstractController
     
             // Send the email
             try {
-                $mailer->send($email);
+                $this->messageBus->dispatch(new SendEmailMessage($email));
             } catch(TransportExceptionInterface $e) {
                 // Log or handle the email send error
             }
