@@ -78,15 +78,14 @@ class FileUploadController extends AbstractController
             $user->setPassword('password');
 
             // Persist the user entity
-            // $this->entityManager->persist($user);
+            $this->entityManager->persist($user);
         }
         // Flush to save all the users
-        // $this->entityManager->flush();
+        $this->entityManager->flush();
         
         // close the file
         fclose($handle);
 
-        // TODO: Send Email Notifications
         // TODO: Validate User
         // TODO: Check if User already exists in DB
 
@@ -124,7 +123,7 @@ class FileUploadController extends AbstractController
     
             // Send the email
             try {
-                $this->messageBus->dispatch(new SendEmailMessage($email));
+                $this->messageBus->dispatch(message: new SendEmailMessage($email));
             } catch(TransportExceptionInterface $e) {
                 // Log or handle the email send error
             }
