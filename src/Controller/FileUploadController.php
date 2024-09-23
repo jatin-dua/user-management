@@ -10,7 +10,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class FileUploadController extends AbstractController
 {
@@ -81,10 +85,45 @@ class FileUploadController extends AbstractController
         // TODO: Validate User
         // TODO: Check if User already exists in DB
 
+        // Send email notification after successful upload
+        try {
+            $this->sendEmailNotifications($emails);
+        } catch (TransportExceptionInterface $e) {
+            // Handle the error appropriately
+            return new Response('Data uploaded to Database, but email sending failed.', Response::HTTP_OK);
+        }
+
         return new JsonResponse([
             'message' => 'File uploaded successfully',
             'filename' => $filename,
             'file_type' => $fileType
         ]);
+    }
+
+    private function sendEmailNotifications(array $emails)
+    {
+        // Get the DSN from environment variables
+        $dsn = $_ENV['MAILER_DSN'];
+        // Create the transport
+        $transport = Transport::fromDsn($dsn);
+        // Create the Mailer
+        $mailer = new Mailer($transport);
+        $username = $_ENV['MAILER_USERNAME'];
+
+        foreach ($emails as $emailAddress) {
+            // Create the email
+            $email = (new Email())
+                ->from($username)
+                ->to($emailAddress)
+                ->subject('Data Upload Notification')
+                ->text('Data has been uploaded and saved to the database.');
+    
+            // Send the email
+            try {
+                $mailer->send($email);
+            } catch(TransportExceptionInterface $e) {
+                // Log or handle the email send error
+            }
+        }
     }
 }
