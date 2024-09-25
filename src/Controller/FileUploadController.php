@@ -18,15 +18,19 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\Messenger\SendEmailMessage;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\env;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class FileUploadController extends AbstractController
 {
     private $messageBus;
     private $entityManager;
-    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $messageBus)
+    private $passwordHasher;
+    
+    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $messageBus, UserPasswordHasherInterface $passwordHasher)
     {
         $this->messageBus = $messageBus;
         $this->entityManager = $entityManager;
+        $this->passwordHasher = $passwordHasher;
     }
 
     #[Route('/api/upload', name: 'app_file_upload', methods: ['POST'])]
@@ -65,7 +69,10 @@ class FileUploadController extends AbstractController
         // read each line in CSV file at a time
         while (($row = fgetcsv($handle)) !== false) {
             [$name, $email, $username, $address, $role] = $row;
-            $role = $role === "USER" ? "ROLE_USER" : "ROLE_ADMIN";
+            $roles = ['ROLE_USER'];
+            if ($role == 'ADMIN') {
+                $roles[] = 'ROLE_ADMIN';
+            }
 
             $emails[] = $email;
 
@@ -74,8 +81,8 @@ class FileUploadController extends AbstractController
             $user->setEmail($email);
             $user->setUsername($username);
             $user->setAddress($address);
-            $user->setRoles([$role]);
-            $user->setPassword('password');
+            $user->setRoles($roles);
+            $user->setPassword($this->passwordHasher->hashPassword($user, 'password'));
 
             // Persist the user entity
             $this->entityManager->persist($user);
