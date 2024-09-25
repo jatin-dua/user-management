@@ -65,8 +65,28 @@ Laura Clark,laura.c@example.com,lauraclark,707 Cherry St,ADMIN
     ```bash
     symfony console doctrine:migrations:migrate
     ```
+6. **Load Sample data** 
+    ```bash
+    symfony console doctrine:fixtures:load
+    ```
 
-5. **Start the Server**
+    Sample User information
+    ```bash
+    **User 1**
+
+    Username: admin
+    Password: admin
+    Roles: ROLE_ADMIN, ROLE_USER
+
+    ----------------------------
+    **User 2**
+
+    Username: user
+    Password: user
+    Roles: ROLE_USER
+    ```
+
+7. **Start the Server**
 
     Start the Symfony development server:
 
@@ -83,13 +103,18 @@ Laura Clark,laura.c@example.com,lauraclark,707 Cherry St,ADMIN
     Backup Database: GET /api/backup
     Restore Database: POST /api/restore
 
+## API Call Procedure
+
+- Go to endpoint **/auth/login** and use credentials mentioned in sample data to get JWT token.
+- Use the JWT token with subsequent requests in format **"Authorization: Bearer <TOKEN>"**
+
 ## Note
 
-    - Ensure that your SMTP email settings are properly configured to send emails upon successful data storage.
-    - The API is designed to handle CSV files and database interactions, so make sure to validate the CSV format before uploading.
-    - Duplicate entries in CSV are not currently handled and will cause the program to crash.
-    - use curl (on CLI) to access POST /api/upload
+- Ensure that your SMTP email settings are properly configured to send emails upon successful data storage.
+- The API is designed to handle CSV files and database interactions, so make sure to validate the CSV format before uploading.
+- Duplicate entries in CSV are not currently handled and will cause the program to crash.
+- use curl (on CLI) to access POST /api/upload
         ```bash
         curl -X POST https://127.0.0.1:8000/api/upload -F "file=@/path/to/data.csv" -F "file_type=text/csv"
         ```
-    - This project is build within time constraints and might not follow the industry standard practices and is not optimized for production use.
+- This project is build within time constraints and might not follow the industry standard practices and is not optimized for production use.
