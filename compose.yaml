@@ -7,7 +7,6 @@ services:
             MYSQL_DATABASE: user_management
         volumes:
             - database_data:/var/lib/mysql:rw
-
         ports:
             # To allow the host machine to access the ports below, modify the lines below.
             # For example, to allow the host to connect to port 3306 on the container, you would change
@@ -17,8 +16,10 @@ services:
 
     redis:
         image: 'redis:latest'
+        container_name: redis
         ports:
             - '6379:6379'
+
 volumes:
     database_data:
 
