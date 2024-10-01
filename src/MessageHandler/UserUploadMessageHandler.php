@@ -6,6 +6,7 @@ namespace App\MessageHandler;
 use App\Entity\User;
 use App\Message\UserUploadMessage;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -24,7 +25,8 @@ class UserUploadMessageHandler
 {
     public function __construct(private EntityManagerInterface $entityManager, 
         private UserPasswordHasherInterface $passwordHasher,
-        private MessageBusInterface $messageBus
+        private MessageBusInterface $messageBus,
+        private LoggerInterface $logger
         ) {}
 
     public function __invoke(UserUploadMessage $message)
@@ -40,6 +42,10 @@ class UserUploadMessageHandler
         $headers = fgetcsv($handle);
 
         $password = $this->passwordHasher->hashPassword(new User(), 'password');
+
+        $batchSize = 10;
+        $batchNo = 1;
+        $i = 0;
         while (($row = fgetcsv($handle)) !== false) {
             [$name, $email, $username, $address, $role] = $row;
             $roles = ['ROLE_USER'];
@@ -59,12 +65,21 @@ class UserUploadMessageHandler
 
             // Persist the user entity
             $this->entityManager->persist($user);
+
+            if (($i % $batchSize) === 0) {
+                $this->entityManager->flush();
+                $this->entityManager->clear();
+                $this->logger->info("Processed Batch $batchNo at " . microtime(true));
+                $batchNo++;
+                sleep(4);
+            }
+            $i++;
         }
         // close the file
         fclose($handle);
 
-        // Flush to save all the users
-        $this->entityManager->flush();
+        $this->entityManager->flush();  // Final flush for any remaining records
+        $this->entityManager->clear();  // Clear after the final flush
 
         // $this->sendEmailNotifications($emails);
     }
