@@ -12,6 +12,7 @@ framework:
         routing:
             # Route your messages to the transports
             'Symfony\Component\Mailer\Messenger\SendEmailMessage': async
+            'App\Message\UserUploadMessage': async
             # 'App\Message\YourMessage': async
     serializer:
             enabled: true
