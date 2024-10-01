@@ -3,11 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Service\FileUploader;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,7 +17,6 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\Messenger\SendEmailMessage;
-use function Symfony\Component\DependencyInjection\Loader\Configurator\env;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class FileUploadController extends AbstractController
@@ -25,48 +24,38 @@ class FileUploadController extends AbstractController
     private $messageBus;
     private $entityManager;
     private $passwordHasher;
-    
-    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $messageBus, UserPasswordHasherInterface $passwordHasher)
+    private FileUploader $fileUploader;
+
+    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $messageBus, UserPasswordHasherInterface $passwordHasher, FileUploader $fileUploader)
     {
         $this->messageBus = $messageBus;
         $this->entityManager = $entityManager;
         $this->passwordHasher = $passwordHasher;
+        $this->fileUploader = $fileUploader;
     }
 
     #[Route('/api/upload', name: 'app_file_upload', methods: ['POST'])]
-    public function upload(Request $request): Response
+    public function upload(Request $request): JsonResponse
     {
-        $uploadedFile = $request->files->get('file');
-        $fileType = $request->request->get('file_type');
 
+        // Your code to handle file upload...
+    
+        $uploadedFile = $request->files->get('file');
         if (!$uploadedFile) {
             throw new BadRequestHttpException('No file provided');
         }
 
-        // Validate the file type (you can also define a list of allowed types)
-        $allowedTypes = ['text/csv']; // Add your allowed types here
-        if (!in_array($fileType, $allowedTypes)) {
-            throw new BadRequestHttpException('Invalid file type');
-        }
+        [$newFileName, $newFilePath] = $this->fileUploader->upload($uploadedFile);
 
-        // Define the directory where you want to store the uploaded file
-        $uploadDirectory = $this->getParameter('upload_directory');
-
-        $filename = pathinfo($uploadedFile->getClientOriginalName(), flags: PATHINFO_FILENAME).'.csv';
-
-        // Move the uploaded file
-        $uploadedFile->move($uploadDirectory, $filename);
-    
-
-        $filepath = "$uploadDirectory/$filename";
-        $handle = fopen($filepath, 'r');
+        $handle = fopen($newFilePath, 'r');
         if ($handle === false) {
-            die('Cannot open the file ' . $filename);
+            die('Cannot open the file ' . $newFileName);
         }
 
         $emails = [];
         $headers = fgetcsv($handle);
-        // read each line in CSV file at a time
+
+        $password = $this->passwordHasher->hashPassword(new User(), 'password');
         while (($row = fgetcsv($handle)) !== false) {
             [$name, $email, $username, $address, $role] = $row;
             $roles = ['ROLE_USER'];
@@ -82,7 +71,7 @@ class FileUploadController extends AbstractController
             $user->setUsername($username);
             $user->setAddress($address);
             $user->setRoles($roles);
-            $user->setPassword($this->passwordHasher->hashPassword($user, 'password'));
+            $user->setPassword($password);
 
             // Persist the user entity
             $this->entityManager->persist($user);
@@ -94,11 +83,10 @@ class FileUploadController extends AbstractController
         fclose($handle);
 
         $this->sendEmailNotifications($emails);
-        
+
         return new JsonResponse([
             'message' => 'File uploaded successfully',
-            'filename' => $filename,
-            'file_type' => $fileType
+            'filename' => $newFileName,
         ]);
     }
 
