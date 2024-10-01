@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Service\FileUploader;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Process\Exception\ProcessFailedException;
@@ -10,17 +12,29 @@ use Symfony\Component\Process\Process;
 
 class RestoreController extends AbstractController
 {
+    private $fileUploader;
+    public function __construct(FileUploader $fileUploader) 
+    {
+        $this->fileUploader = $fileUploader;
+    }
+
     #[Route('/api/restore', name: 'app_restore', methods: ['POST'])]
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $dbName = $this->getParameter('database_name');
         $dbUser = $this->getParameter('database_user');
         $dbPassword = $this->getParameter('database_password');
         
-        $projectDir = $this->getParameter('kernel.project_dir');
-        $backupDir = "$projectDir/db_backup";
-        $backupFile = 'backup.sql';
-        $backupPath = "$backupDir/$backupFile";
+        $backupPath = '';
+        $uploadedSqlFile = $request->files->get('file');
+        if ($uploadedSqlFile) {
+            [$newFileName, $newFilePath] = $this->fileUploader->upload($uploadedSqlFile);
+            $backupPath = $newFilePath;
+
+        } else {
+            $projectDir = $this->getParameter('kernel.project_dir');
+            $backupPath = "$projectDir/db_backup/backup.sql";
+        }
 
         $backupCommand = [
             'docker',
