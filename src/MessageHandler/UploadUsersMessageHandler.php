@@ -38,7 +38,7 @@ class UploadUsersMessageHandler
 
         $batchSize = 10;
         $batchNo = 1;
-        $i = 0;
+        $i = 1;
         while (($row = fgetcsv($handle)) !== false) {
             [$name, $email, $username, $address, $role] = $row;
             $roles = ['ROLE_USER'];
@@ -60,12 +60,18 @@ class UploadUsersMessageHandler
             $this->entityManager->persist($user);
 
             if (($i % $batchSize) === 0) {
-                $this->entityManager->flush();
-                $this->entityManager->clear();
-                $this->logger->info("Processed Batch $batchNo at " . microtime(true));
-                $this->messageBus->dispatch(new SendEmailsMessage($emails));
-                $emails = [];
-                $batchNo++;
+                try {
+                    $this->logger->info("Starting Batch $batchNo at " . microtime(true));
+                    $this->entityManager->flush();
+                    $this->entityManager->clear();
+                    $this->messageBus->dispatch(new SendEmailsMessage($emails));
+                    $this->logger->info("Processed Batch $batchNo at " . microtime(true));
+                    $emails = [];
+                    $batchNo++;
+                } catch (\Exception $e) {
+                    $this->logger->error("Failed to process Batch $batchNo: " . $e->getMessage());
+                }
+
                 sleep(4);
             }
             $i++;
@@ -73,8 +79,14 @@ class UploadUsersMessageHandler
         // close the file
         fclose($handle);
 
-        $this->entityManager->flush();  // Final flush for any remaining records
-        $this->entityManager->clear();  // Clear after the final flush
-        $this->messageBus->dispatch(new SendEmailsMessage($emails));
+        try {
+            $this->logger->info("Starting Batch $batchNo at " . microtime(true));
+            $this->entityManager->flush();  // Final flush for any remaining records
+            $this->entityManager->clear();  // Clear after the final flush
+            $this->messageBus->dispatch(new SendEmailsMessage($emails));
+            $this->logger->info("Processed Batch $batchNo at " . microtime(true));
+        } catch (\Exception $e) {
+            $this->logger->error("Failed to process Batch $batchNo: " . $e->getMessage());
+        }
     }
 }
