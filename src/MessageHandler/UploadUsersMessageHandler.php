@@ -5,11 +5,12 @@ namespace App\MessageHandler;
 
 use App\Entity\User;
 use App\Message\UploadUsersMessage;
-use App\Service\EmailNotification;
+use App\Message\SendEmailsMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 // TODO: Implement Error handling while data upload (like for duplicate data)
 #[AsMessageHandler]
@@ -18,7 +19,7 @@ class UploadUsersMessageHandler
     public function __construct(private EntityManagerInterface $entityManager, 
         private UserPasswordHasherInterface $passwordHasher,
         private LoggerInterface $logger,
-        private EmailNotification $notifier,
+        private MessageBusInterface $messageBus
         ) {}
 
     public function __invoke(UploadUsersMessage $message)
@@ -62,7 +63,7 @@ class UploadUsersMessageHandler
                 $this->entityManager->flush();
                 $this->entityManager->clear();
                 $this->logger->info("Processed Batch $batchNo at " . microtime(true));
-                $this->notifier->sendEmailNotifications($emails);
+                $this->messageBus->dispatch(new SendEmailsMessage($emails));
                 $emails = [];
                 $batchNo++;
                 sleep(4);
@@ -74,6 +75,6 @@ class UploadUsersMessageHandler
 
         $this->entityManager->flush();  // Final flush for any remaining records
         $this->entityManager->clear();  // Clear after the final flush
-        $this->notifier->sendEmailNotifications($emails);
+        $this->messageBus->dispatch(new SendEmailsMessage($emails));
     }
 }
