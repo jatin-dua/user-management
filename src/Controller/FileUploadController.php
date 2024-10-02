@@ -2,8 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
-use App\Message\UserUploadMessage;
+use App\Message\UploadUsersMessage;
 use App\Service\FileUploader;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -43,7 +42,7 @@ class FileUploadController extends AbstractController
 
         [$newFileName, $newFilePath] = $this->fileUploader->upload($uploadedFile);
 
-        $this->messageBus->dispatch(new UserUploadMessage(userDataFile: $newFilePath));
+        $this->messageBus->dispatch(new UploadUsersMessage(userDataFile: $newFilePath));
 
         return new Response('User data is being processed asynchronously.', Response::HTTP_ACCEPTED);
     }

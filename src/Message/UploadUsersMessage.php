@@ -1,9 +1,9 @@
 <?php
 
-// src/Message/UserUploadMessage.php
+// src/Message/UploadUsersMessage.php
 namespace App\Message;
 
-class UserUploadMessage
+class UploadUsersMessage
 {
     private string $userDataFile;
 

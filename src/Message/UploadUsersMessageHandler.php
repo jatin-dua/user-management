@@ -1,10 +1,10 @@
 <?php
 
-// src/MessageHandler/UserUploadMessageHandler.php
+// src/MessageHandler/UploadUsersMessageHandler.php
 namespace App\MessageHandler;
 
 use App\Entity\User;
-use App\Message\UserUploadMessage;
+use App\Message\UploadUsersMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -21,7 +21,7 @@ use Symfony\Component\Mailer\Messenger\SendEmailMessage;
 // TODO: Implement Batch Processing of Data
 // TODO: Implement Error handling while data upload (like for duplicate data)
 #[AsMessageHandler]
-class UserUploadMessageHandler 
+class UploadUsersMessageHandler 
 {
     public function __construct(private EntityManagerInterface $entityManager, 
         private UserPasswordHasherInterface $passwordHasher,
@@ -29,7 +29,7 @@ class UserUploadMessageHandler
         private LoggerInterface $logger
         ) {}
 
-    public function __invoke(UserUploadMessage $message)
+    public function __invoke(UploadUsersMessage $message)
     {
         $userDataFile = $message->getUserDataFile();
 
