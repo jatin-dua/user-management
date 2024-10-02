@@ -4,7 +4,10 @@
 /.env.local.php
 /.env.*.local
 /config/secrets/prod/prod.decrypt.private.php
+/db_backup/
+/dummy/
 /public/bundles/
+/public/uploads/
 /var/
 /vendor/
 ###< symfony/framework-bundle ###

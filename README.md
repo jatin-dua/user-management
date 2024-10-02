@@ -106,15 +106,18 @@ Laura Clark,laura.c@example.com,lauraclark,707 Cherry St,ADMIN
 ## API Call Procedure
 
 - Go to endpoint **/auth/login** and use credentials mentioned in sample data to get JWT token.
-- Use the JWT token with subsequent requests in format **"Authorization: Bearer <TOKEN>"**
+- Use the JWT token with subsequent requests in format "Authorization: Bearer TOKEN"
 
 ## Note
 
 - Ensure that your SMTP email settings are properly configured to send emails upon successful data storage.
 - The API is designed to handle CSV files and database interactions, so make sure to validate the CSV format before uploading.
 - Duplicate entries in CSV are not currently handled and will cause the program to crash.
-- use curl (on CLI) to access POST /api/upload
+- **POST /api/upload**,
+
         ```bash
-        curl -X POST https://127.0.0.1:8000/api/upload -F "file=@/path/to/data.csv" -F "file_type=text/csv"
+        curl -X POST https://127.0.0.1:8000/api/upload -F "file=@/path/to/data.csv"
         ```
+        Include File with key 'file'
+- **POST /api/restore** supports User provided file with the request. Default behaviour is to look for 'backup.sql' in the db_backup directory in project root.
 - This project is build within time constraints and might not follow the industry standard practices and is not optimized for production use.
