@@ -1,10 +1,11 @@
 services:
-###> doctrine/doctrine-bundle ###
+  ###> doctrine/doctrine-bundle ###
   database:
     image: mysql:${MYSQL_VERSION:-8}
     container_name: database
     environment:
       # MYSQL_RANDOM_ROOT_PASSWORD: "true"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
       MYSQL_ROOT_PASSWORD: ""
       MYSQL_DATABASE: user_management
     healthcheck:
@@ -21,8 +22,8 @@ services:
       # For example, to allow the host to connect to port 3306 on the container, you would change
       # "3306" to "3306:3306". Where the first port is exposed to the host and the second is the container port.
       # See https://docs.docker.com/compose/compose-file/compose-file-v3/#ports for more information.
-      - '3306:3306'
-###< doctrine/doctrine-bundle ###
+      - "3306:3306"
+  ###< doctrine/doctrine-bundle ###
 
   php:
     image: ${IMAGES_PREFIX:-}app-php
@@ -45,6 +46,9 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+      - ./frankenphp/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint
+      # - ./config/jwt:/app/config/jwt
+      - ./:/app
     ports:
       # HTTP
       - target: 80
@@ -63,10 +67,10 @@ services:
         condition: service_healthy
 
   redis:
-      image: 'redis:latest'
-      container_name: redis
-      ports:
-        - '6379:6379'
+    image: "redis:latest"
+    container_name: redis
+    ports:
+      - "6379:6379"
 
 # Mercure is installed as a Caddy module, prevent the Flex recipe from installing another service
 ###> symfony/mercure-bundle ###
@@ -75,9 +79,9 @@ services:
 volumes:
   caddy_data:
   caddy_config:
-###> symfony/mercure-bundle ###
-###< symfony/mercure-bundle ###
+  ###> symfony/mercure-bundle ###
+  ###< symfony/mercure-bundle ###
 
-###> doctrine/doctrine-bundle ###
+  ###> doctrine/doctrine-bundle ###
   database_data:
 ###< doctrine/doctrine-bundle ###
